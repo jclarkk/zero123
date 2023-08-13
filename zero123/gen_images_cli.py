@@ -164,11 +164,7 @@ def main_cli(models, device, x='0.0', y='0.0', z=0.0,
              precision='fp32', h=256, w=256, output_folder=None):
     raw_im.thumbnail([1536, 1536], Image.Resampling.LANCZOS)
 
-    input_im = preprocess_image(models, raw_im, preprocess)
-
-    input_im = transforms.ToTensor()(input_im).unsqueeze(0).to(device)
-    input_im = input_im * 2 - 1
-    input_im = transforms.functional.resize(input_im, [h, w])
+    input_im = process_image(device, models, preprocess, raw_im, h, w)
 
     if ',' in x and ',' in y:
         raise EnvironmentError("Cannot use arrays in azimuth and polar, use only one.")
@@ -178,8 +174,10 @@ def main_cli(models, device, x='0.0', y='0.0', z=0.0,
     index = 0
     if ',' in x:
         x_list = x.split(',')
+        prev_x = 0
         for current_x in x_list:
             current_x = float(current_x)
+            x_delta = current_x if index == 0 else current_x - prev_x
             output_ims = sample_images(
                 ddim_eta,
                 ddim_steps,
@@ -190,17 +188,26 @@ def main_cli(models, device, x='0.0', y='0.0', z=0.0,
                 precision,
                 scale,
                 w,
-                current_x,
+                x_delta,
                 float(y),
                 z
             )
             for image in output_ims:
                 image.save(os.path.join(output_folder, f'{index}.png'))
                 index += 1
+
+                new_image = Image.open(os.path.join(output_folder, f'{index}.png'))
+                new_image.thumbnail([1536, 1536], Image.Resampling.LANCZOS)
+
+                input_im = process_image(device, models, preprocess, raw_im, h, w)
+
+            prev_x = float(x)
     elif ',' in y:
         y_list = y.split(',')
+        prev_y = 0
         for current_y in y_list:
             current_y = float(current_y)
+            y_delta = current_y if index == 0 else current_y - prev_y
             output_ims = sample_images(
                 ddim_eta,
                 ddim_steps,
@@ -212,12 +219,19 @@ def main_cli(models, device, x='0.0', y='0.0', z=0.0,
                 scale,
                 w,
                 float(x),
-                current_y,
+                y_delta,
                 z
             )
             for image in output_ims:
                 image.save(os.path.join(output_folder, f'{index}.png'))
                 index += 1
+
+                new_image = Image.open(os.path.join(output_folder, f'{index}.png'))
+                new_image.thumbnail([1536, 1536], Image.Resampling.LANCZOS)
+
+                input_im = process_image(device, models, preprocess, raw_im, h, w)
+
+            prev_y = float(y)
     else:
         output_ims = sample_images(
             ddim_eta,
@@ -238,6 +252,14 @@ def main_cli(models, device, x='0.0', y='0.0', z=0.0,
             index += 1
 
     print(f'Finished creating {index} output images')
+
+
+def process_image(device, models, preprocess, raw_im, h, w):
+    input_im = preprocess_image(models, raw_im, preprocess)
+    input_im = transforms.ToTensor()(input_im).unsqueeze(0).to(device)
+    input_im = input_im * 2 - 1
+    input_im = transforms.functional.resize(input_im, [h, w])
+    return input_im
 
 
 def sample_images(ddim_eta, ddim_steps, h, input_im, models, n_samples, precision, scale, w, x, y, z):
@@ -272,8 +294,8 @@ def main():
         device,
         raw_im=raw_im,
         n_samples=args.n_samples,
-        x=args.polar_angle,
-        y=args.azimuth_angle,
+        x=[args.polar_angle],
+        y=[args.azimuth_angle],
         z=args.zoom,
         preprocess=args.preprocess,
         ddim_steps=args.ddim_steps,
