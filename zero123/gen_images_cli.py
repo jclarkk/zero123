@@ -178,6 +178,7 @@ def main_cli(models, device, x='0.0', y='0.0', z=0.0,
         for current_x in x_list:
             current_x = float(current_x)
             x_delta = current_x if index == 0 else current_x - prev_x
+            print(f'Current: {current_x} delta: {x_delta}')
             output_ims = sample_images(
                 ddim_eta,
                 ddim_steps,
