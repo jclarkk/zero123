@@ -202,7 +202,7 @@ def main_cli(models, device, x='0.0', y='0.0', z=0.0,
 
                 input_im = process_image(device, models, preprocess, raw_im, h, w)
 
-            prev_x = float(x)
+            prev_x = current_x
     elif ',' in y:
         y_list = y.split(',')
         prev_y = 0
@@ -224,15 +224,16 @@ def main_cli(models, device, x='0.0', y='0.0', z=0.0,
                 z
             )
             for image in output_ims:
-                image.save(os.path.join(output_folder, f'{index}.png'))
+                image_path = os.path.join(output_folder, f'{index}.png')
+                image.save(image_path)
                 index += 1
 
-                new_image = Image.open(os.path.join(output_folder, f'{index}.png'))
+                new_image = Image.open(image_path)
                 new_image.thumbnail([1536, 1536], Image.Resampling.LANCZOS)
 
                 input_im = process_image(device, models, preprocess, raw_im, h, w)
 
-            prev_y = float(y)
+            prev_y = current_y
     else:
         output_ims = sample_images(
             ddim_eta,
