@@ -199,9 +199,9 @@ def main_cli(models, device, x='0.0', y='0.0', z=0.0,
                 index += 1
 
                 new_image = Image.open(image_path)
-                new_image.thumbnail([1536, 1536], Image.Resampling.LANCZOS)
+                # new_image.thumbnail([1536, 1536], Image.Resampling.LANCZOS)
 
-                input_im = process_image(device, models, preprocess, new_image, h, w)
+                input_im = process_image(device, models, False, new_image, h, w)
 
             prev_x = current_x
     elif ',' in y:
