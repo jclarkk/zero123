@@ -72,10 +72,10 @@ model:
 data:
   target: ldm.data.simple.ObjaverseDataModuleFromConfig
   params:
-    root_dir: 'views_whole_sphere'
-    batch_size: 192
-    num_workers: 16
-    total_view: 4
+    root_dir: 'hexa_dataset'
+    batch_size: 48
+    num_workers: 8
+    total_view: 8
     train:
       validation: False
       image_transforms:
